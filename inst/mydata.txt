@@ -1,0 +1,4 @@
+"x"	"WLAN (Per HCF Access Category).Throughput (bits/sec) <Voice>"	"95%CI"	"WLAN (Per HCF Access Category).Throughput (bits/sec) <Video>"	"95%CI"	"WLAN (Per HCF Access Category).Throughput (bits/sec) <Best Effort>"	"95%CI"	"WLAN (Per HCF Access Category).Throughput (bits/sec) <Background>"	"95%CI"
+1	2.70214E+06	121023	1.94245E+06	76146.9	1.1396E+06	72200.2	1.14344E+06	60750.6
+2	1.9207E+06	189865	1.58829E+06	80444.8	1.04647E+06	60387	982434	80031.8
+3	2.33849E+06	120934	1.85431E+06	116278	1.14719E+06	76487.7	1.35766E+06	84200.6
