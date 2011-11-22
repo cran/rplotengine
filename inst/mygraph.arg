@@ -1,3 +1,4 @@
+# -------------------------------------------------------# File: mygraph.arg# -------------------------------------------------------
 title=mytitle
 subtitle=mysubtitle
 x_axis_title=Total offered traffic per AC (Mbit/s)

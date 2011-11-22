@@ -17,7 +17,7 @@ library(xtable)
 
 	
 # ------------------------------------------------------------------------
-# Definimos los parámetros del script (argumentos para un gráfico)
+# Definimos los parametros del script (argumentos para un grafico)
 # ------------------------------------------------------------------------
 
 # Variables de R con los valores de los parámetros
@@ -71,12 +71,12 @@ graph_filename = ""
 graph_fileext_seq = ""
 
 # ------------------------------------------------------------------------
-# Leemos parámetros del gráfico desde archivo de entrada
+# Leemos parametros del grafico desde archivo de entrada
 # ------------------------------------------------------------------------
 
 NUM_ARGS = length (R_VARS)
 
-# Obtenemos lista de argumentos desde línea de órdenes
+# Obtenemos lista de argumentos desde linea de ordenes
 # First read in the arguments listed at the command line
 args  = commandArgs()
 nargs = length(args)
@@ -95,26 +95,39 @@ if (!file.exists(args_file)) {
 print (paste("Loading graph parameters file '", args_file, "' ...", sep=""))
 args_lines = readLines (args_file)
 nlines = length (args_lines)
-if (nlines != NUM_ARGS) {
-   print (paste("Input file '", args_file, "' has ", nlines, " lines, and it must have ", NUM_ARGS, ".", sep="")) # stop
-   return (FALSE)
-}
-# Asignamos parámetros (quizás se podría llamar también a assign_arguments)
+
+# Asignamos parametros
+var = 1
 for (l in 1:nlines) {
+   args_lines[l] = trim(args_lines[l])
+   if (args_lines[l] == "") next
+   if (substr (args_lines[l],1,1) == '#') next
    arg = unlist(strsplit(args_lines[l],"\\="))
+   if (length(arg) != 2) {
+      print ( paste("Syntax error in input file, line: ", l, sep="") )
+      print ( args_lines[l] )
+      return (FALSE)
+   }
    arg_name  = arg[1]
    arg_value = arg[2]
-   if (arg_name == R_VARS[l]) {
-      # Si el archivo argumentos se ha escrito en el orden esperado irá más rápido
-      i = l
+   if (arg_name == R_VARS[var]) {
+      # Si el archivo argumentos se ha escrito en el orden esperado y sin comentarios ira mas rapido
+      i = var
+      if (var < NUM_ARGS) var = var+1
    } else {
       # Buscamos
+      i = NUM_ARGS+1
       for (a in 1:NUM_ARGS) {
          if (arg_name == R_VARS[a]) {
             i=a
             break
          }
       }
+   }
+   if (i > NUM_ARGS) {
+      print ( paste("Unknown argument in input file, line: ", l, sep="") )
+      print ( args_lines[l] )
+      return (FALSE)
    }
    val_name = R_VARS[i]
    line = paste (val_name, "='", arg_value, "'", sep="")
@@ -123,7 +136,7 @@ for (l in 1:nlines) {
 
 # -------------------------------------------------------------------------
 
-# Convertimos a valores numéricos o listas algunos argumentos
+# Convertimos a valores numericos o listas algunos argumentos
 col_x_values  = as.numeric (col_x_values)
 col_y_values  = as.numeric (unlist (strsplit (col_y_values,",")))
 series_names  = unlist (strsplit (series_names,","))
@@ -154,7 +167,7 @@ graph_fileext_seq = unlist (strsplit(graph_fileext_seq,","))
 
 
 # ------------------------------------------------------------------------
-# Leemos los datos para el gráfico
+# Leemos los datos para el grafico
 # ------------------------------------------------------------------------
 
 # Nos aseguramos de que existe el archivo de datos de entrada
@@ -196,7 +209,7 @@ y = array (0, c(col_x_values_len,num_series))
 
 # Si no hemos especificado los nombres de las series suficientes para la leyenda 
 # consideramos las cabeceras del fichero. Asignamos tambien un nombre a la serie total.
-# Esto ya se hace al leer los gráficos desde simul_graphs, pero se mantiene por si
+# Esto ya se hace al leer los graficos desde simul_graphs, pero se mantiene por si
 # se utiliza este script R desde un archivo por lotes o script.
 if (series_names_len < num_series_legend) {
    series_names_aux = array (0, c(num_series_legend))
@@ -224,18 +237,18 @@ if (series_names_len < num_series_legend) {
    }
    series_names = series_names_aux
 } else if (series_names_len > num_series_legend) {
-   # Si hemos especificado más nombres que series consideramos sólo los necesarios
+   # Si hemos especificado más nombres que series consideramos solo los necesarios
    series_names = series_names[1:num_series_legend]
 }
 
 # Para cada valor del eje x (fila del archivo de datos)
 for (x_idx in 1:col_x_values_len) {
-   # Obtenemos el valor del eje x, que será el mismo para todas las series (aplicando el factor)
+   # Obtenemos el valor del eje x, que sera el mismo para todas las series (aplicando el factor)
    x_value = data[x_idx,col_x_values] * x_factor 	# row.names(data)[x_idx] * x_factor
    # Obtenemos el valor del eje y para Para todas las series (aplicando el factor)
    for (serie in 1:col_y_values_len) {              
        col = col_y_values[serie]
-       x[x_idx,serie] = x_value		# Necesario sólo para cálculo del CI
+       x[x_idx,serie] = x_value		# Necesario solo para calculo del CI
        y[x_idx,serie] = data[x_idx,col] * y_factor
        # Para series total (1-TOTAL o 2-AVERAGE)
        if ((total_serie == 1) || (total_serie == 2)) { 
@@ -265,8 +278,8 @@ if (y_max < 0) y_max = max (y[,1:num_series], na.rm=TRUE)
 
 
 # ------------------------------------------------------------------------
-# Exportamos datos a LaTeX (archivo .tex): mismo nombre que el gráfico pero .tex
-# Lo hacemos después de generar los gráficos, por si el paquete "xtable" no
+# Exportamos datos a LaTeX (archivo .tex): mismo nombre que el grafico pero .tex
+# Lo hacemos despues de generar los graficos, por si el paquete "xtable" no
 # estuviera instalado.
 # ------------------------------------------------------------------------
 exportar_datos_latex (title, graph_filename, series_names,
@@ -279,7 +292,7 @@ exportar_datos_latex (title, graph_filename, series_names,
 
 print ("Generating graphs ...")
 
-# Invocamos a la función correspondiente según tipo de gráfico:
+# Invocamos a la funcion correspondiente segun tipo de grafico:
 #    0-lineas
 #    1-puntos
 #    2-lineas & puntos
@@ -307,11 +320,11 @@ if ((graph_type >= 0) && (graph_type <= 4)) {
 
 }
 
-print ("Ok.")
+print ("Ok")
 return (TRUE)
 
 }
-
+																															 
 # =========================================================================
 # =========================================================================
 # plot_lines: dibujar gr�ficas de varias series (cada serie una l�nea)
@@ -767,6 +780,33 @@ return
 
 
 # =========================================================================
+# Recortar espacios en blanco de la izquierda y la derecha
+# =========================================================================
+trim<-function (str) {
+   str <- gsub ("(^ +)|( +$)","",str)
+   return(str)
+}
+
+
+# =========================================================================
+# Recortar espacios en blanco de la izquierda
+# =========================================================================
+ltrim<-function (str) {
+   str <-sub ("^ +","",str)
+   return (str)
+}
+
+
+# =========================================================================
+# Recortar espacios en blanco de la derecha
+# =========================================================================
+rtrim<-function (str) {
+   str <- sub (" +$","",str)
+   return (str);
+}
+
+
+# =========================================================================
 # importar_datos: leer un fichero de datos y resumirlos para gr�ficas
 # =========================================================================
 
@@ -806,7 +846,7 @@ exportar_datos_latex = function (title, filename, row_names, col_names,
                                  data, col_x_values_len, decimales) {
    # Nombre de archivo (igual que el gr�fico pero .tex)
    filename_tex = paste (filename, ".tex", sep="")
-   print (paste("Exporting data to LaTeX '", filename_tex, "' ..."))
+   print (paste("Exporting data to LaTeX '", filename_tex, "' ...", sep=""))
 
    # Tabla latex (reservamos una fila y una columna para cabeceras)
    # Por seguridad, ponemos un caracter de escape delante de los subrayados
