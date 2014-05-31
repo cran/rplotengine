@@ -1,5 +1,7 @@
+# Namespace for package 'rplotengine'
 # -----------------------------------------------
 # List of public functions
 # -----------------------------------------------
 export(rplotengine)
+import(xtable)
 

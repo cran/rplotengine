@@ -8,32 +8,33 @@ rplotengine = function (args_file = "mygraph.arg") {
 # Importamos paquetes externos
 # Buscamos en directorios especificados en la variable de entorno R_LIBS_USER
 # -----------------------------------------------------------------------
-library(xtable)
+#library(xtable)
+#require(xtable)
+#do.call(library, list("xtable")) 
 
 # -------------------------------------------------------------------------
 # Leemos archivos de funciones (file.path para ser multiplataforma)
 # -------------------------------------------------------------------------
 #source(...)
 
-	
 # ------------------------------------------------------------------------
 # Definimos los parametros del script (argumentos para un grafico)
 # ------------------------------------------------------------------------
 
-# Variables de R con los valores de los par√°metros
-R_VARS = c ( "title", "subtitle", "x_axis_title", "y_axis_title",
+# Variables de R con los valores de los parametros
+R_VARS = c( "title", "subtitle", "x_axis_title", "y_axis_title",
     "col_x_values", "col_y_values", "series_names",
     "x_factor", "y_factor", "total_serie", "total_value",
     "x_min", "x_max", "y_min", "y_max", "y_log",
-    "show_titles", "show_grid", "show_hotspots",
+    "show_titles", "show_grid",
     "show_confint", "confint_as_percentage",
     "text_size_title", "text_size_subtitle",
     "text_size_axis_ticks", "text_size_axis_titles", "text_size_legend",
-    "pos_legend", "graph_type", "width_factor", "height_factor",
+    "pos_legend", "graph_type", "width_factor", "height_factor", "latex_digits", "verbose",
     "data_filename", "graph_filename", "graph_fileext_seq" )
 
 # Para evitar los siguientes mensajes al chequear el paquete:
-# rplotengine: no visible binding for global variable ‚Äòxxx‚Äô
+# rplotengine: no visible binding for global variable 'xxx'
 title = ""
 subtitle = ""
 title = ""
@@ -54,7 +55,7 @@ y_max = ""
 y_log = ""
 show_titles = ""
 show_grid = ""
-show_hotspots = ""
+#show_hotspots = ""
 show_confint = ""
 confint_as_percentage = ""
 text_size_title = ""
@@ -66,6 +67,8 @@ pos_legend = ""
 graph_type = ""
 width_factor = ""
 height_factor = ""
+latex_digits = ""
+verbose = ""
 data_filename = ""
 graph_filename = ""
 graph_fileext_seq = ""
@@ -74,7 +77,7 @@ graph_fileext_seq = ""
 # Leemos parametros del grafico desde archivo de entrada
 # ------------------------------------------------------------------------
 
-NUM_ARGS = length (R_VARS)
+NUM_ARGS = length(R_VARS)
 
 # Obtenemos lista de argumentos desde linea de ordenes
 # First read in the arguments listed at the command line
@@ -88,11 +91,17 @@ if (!file.exists(args_file)) {
    if (length(args_file) == 0) {
       # Cuando se chequea el paquete el directorio actual es .../rplotengine.Rcheck (print(getwd()),
 	  # y existe en .../rplotengine.Rcheck/rplotengine (copiado desde /rplotengine/inst).
-      print (paste("Graph parameters file '", args_file, "' not found.", sep=""))  # stop
+      if (verbose == "1") {
+         writeLines (paste("Graph parameters file '", args_file, "' not found.", sep=""))  # stop
+      }
       return (FALSE)
    }
+} else {
+   args_file = paste(getwd(), "/", args_file, sep="")
 }
-print (paste("Loading graph parameters file '", args_file, "' ...", sep=""))
+writeLines (paste("Graph parameters file ...", sep=""))
+writeLines (paste("   File: ", args_file, sep=""))
+
 args_lines = readLines (args_file)
 nlines = length (args_lines)
 
@@ -104,8 +113,8 @@ for (l in 1:nlines) {
    if (substr (args_lines[l],1,1) == '#') next
    arg = unlist(strsplit(args_lines[l],"\\="))
    if (length(arg) != 2) {
-      print ( paste("Syntax error in input file, line: ", l, sep="") )
-      print ( args_lines[l] )
+      writeLines ( paste("Syntax error in input file, line: ", l, sep="") )
+      writeLines ( args_lines[l] )
       return (FALSE)
    }
    arg_name  = arg[1]
@@ -125,12 +134,12 @@ for (l in 1:nlines) {
       }
    }
    if (i > NUM_ARGS) {
-      print ( paste("Unknown argument in input file, line: ", l, sep="") )
-      print ( args_lines[l] )
+      writeLines ( paste("Unknown argument in input file, line: ", l, sep="") )
+      writeLines ( args_lines[l] )
       return (FALSE)
    }
    val_name = R_VARS[i]
-   line = paste (val_name, "='", arg_value, "'", sep="")
+   line = paste (val_name, "='", arg_value, "'", sep="")  
    eval (parse(text=line))
 }
 
@@ -144,16 +153,20 @@ x_factor      = as.double (x_factor)
 y_factor      = as.double (y_factor)
 total_serie   = as.numeric (total_serie)
 total_value   = as.double (total_value)
-x_min         = as.double (x_min)
-x_max         = as.double (x_max)
-y_min         = as.double (y_min)
-y_max         = as.double (y_max)
+
+# Valores min/max se calculan una vez leidos y procesados los datos
+#x_min
+#x_max
+#y_min
+#y_max
+
 #y_log         = ifelse((y_log=="0"), FALSE, TRUE)
 #show_titles   = ifelse((show_titles=="0"), FALSE, TRUE)
 #show_grid     = ifelse((show_grid=="0"), FALSE, TRUE)
-#show_hotspots = ifelse((show_hotspots=="0"), FALSE, TRUE)
+##show_hotspots = ifelse((show_hotspots=="0"), FALSE, TRUE)
 #show_confint  = ifelse((show_confint=="0"), FALSE, TRUE)
 #confint_as_percentage = ifelse((confint_as_percentage=="0"), FALSE, TRUE)
+
 text_size_title       = as.double (text_size_title)
 text_size_subtitle    = as.double (text_size_subtitle)
 text_size_axis_ticks  = as.double (text_size_axis_ticks)
@@ -163,6 +176,7 @@ pos_legend    = as.numeric (pos_legend)
 graph_type    = as.numeric (graph_type)
 width_factor  = as.numeric (width_factor)
 height_factor = as.numeric (height_factor)
+latex_digits  = as.numeric (latex_digits)
 graph_fileext_seq = unlist (strsplit(graph_fileext_seq,","))
 
 
@@ -171,24 +185,48 @@ graph_fileext_seq = unlist (strsplit(graph_fileext_seq,","))
 # ------------------------------------------------------------------------
 
 # Nos aseguramos de que existe el archivo de datos de entrada
-if (!file.exists(data_filename)) { 
-   print (paste("Data file '", data_filename, "' not found.", sep="")) # stop
+if (!file.exists(data_filename)) {
+   # Puede que sea cuando se chequean los ejemplos del paquete.
+   data_filename = system.file(data_filename, package = "rplotengine")
+   if (length(data_filename) == 0) { 
+      # Cuando se chequea el paquete el directorio actual es .../rplotengine.Rcheck (print(getwd()),
+	  # y existe en .../rplotengine.Rcheck/rplotengine.
+      if (verbose == "1") {
+         writeLines (paste("Data file '", data_filename, "' not found.", sep="")) # stop
+      }
+      return (FALSE)
+   }
+} else {
+   data_filename = paste(getwd(), "/", data_filename, sep="")
+}
+
+# Leemos los datos (simbolo # se utiliza para comentarios con read.table)
+if (verbose == "1") {
+   writeLines (paste("Loading data file ...", sep=""))
+   writeLines (paste("   File: ", data_filename, sep=""))
+}
+data = read.table (data_filename, header=TRUE)
+
+# Debug: mostramos los datos
+if (verbose == "1") {
+   writeLines (paste("   cols: ", NCOL(data), ifelse(NCOL(data)==0, " --> ERROR", ""), sep=""))
+   writeLines (paste("   rows: ", NROW(data), ifelse(NROW(data)==0, " --> ERROR", ""), sep=""))
+   #print (data)
+}
+
+if ((NCOL(data)==0) | (NROW(data)==0)) { 
    return (FALSE)
 }
-# Leemos los datos
-print (paste("Loading data file '", data_filename, "' ...", sep=""))
-data = read.table (data_filename, header=TRUE)
-# Mostramos los datos
-#print (data)
-
 
 # ------------------------------------------------------------------------
-# Preparamos los datos para el gr√°fico
+# Preparamos los datos para el grafico
 # ------------------------------------------------------------------------
 
-print ("Processing data ...")
+if (verbose == "1") {
+   writeLines ("Processing data ...")
+}
 
-# Contamos Valores del eje X e y
+# Contamos valores del eje X e Y
 col_x_values_len = NROW(data)
 col_y_values_len = NROW(col_y_values)
 
@@ -237,8 +275,15 @@ if (series_names_len < num_series_legend) {
    }
    series_names = series_names_aux
 } else if (series_names_len > num_series_legend) {
-   # Si hemos especificado m√°s nombres que series consideramos solo los necesarios
+   # Si hemos especificado mas nombres que series consideramos solo los necesarios
    series_names = series_names[1:num_series_legend]
+}
+
+# Debug: series names
+if (verbose == "1") {
+   for (serie in 1:num_series) {
+      writeLines (paste("   Serie #", serie, ": ", series_names[serie], " (col=", col_y_values[serie], ")", sep=""))
+   }
 }
 
 # Para cada valor del eje x (fila del archivo de datos)
@@ -248,6 +293,11 @@ for (x_idx in 1:col_x_values_len) {
    # Obtenemos el valor del eje y para Para todas las series (aplicando el factor)
    for (serie in 1:col_y_values_len) {              
        col = col_y_values[serie]
+       # Por seguridad, comprobamos que la columna especificada no se salga de rango
+       if (col>NCOL(data)) {
+          writeLines (paste("   Column ", col, " for serie #", serie, " is out of range [0..", NCOL(data), "]", sep=""));
+          return (FALSE)
+       }
        x[x_idx,serie] = x_value		# Necesario solo para calculo del CI
        y[x_idx,serie] = data[x_idx,col] * y_factor
        # Para series total (1-TOTAL o 2-AVERAGE)
@@ -269,28 +319,47 @@ for (x_idx in 1:col_x_values_len) {
 }
 
 # ------------------------------------------------------------------------
-# Calculamos valores min/max en el caso de no haberlo especificado (-1)
+# Calculamos valores min/max en el caso de no haber especificado "automatic"
 # ------------------------------------------------------------------------
-if (x_min < 0) x_min = min (x, na.rm=TRUE)
-if (x_max < 0) x_max = max (x, na.rm=TRUE)
-if (y_min < 0) y_min = min (y[,1:num_series], na.rm=TRUE)
-if (y_max < 0) y_max = max (y[,1:num_series], na.rm=TRUE)
+x_min = ifelse((x_min=="automatic"), min(x,na.rm=TRUE),                as.double (x_min))
+x_max = ifelse((x_max=="automatic"), max(x,na.rm=TRUE),                as.double (x_max))
+y_min = ifelse((y_min=="automatic"), min(y[,1:num_series],na.rm=TRUE), as.double (y_min))
+y_max = ifelse((y_max=="automatic"), max(y[,1:num_series],na.rm=TRUE), as.double (y_max))
 
+# ------------------------------------------------------------------------
+# Comprobamos valor y_min para el eje Y: caso particular
+# Si la escala es logarÌtmica en el eje 'y', el mÌnimo no puede ser 0.0 (error).
+# ------------------------------------------------------------------------
+if (y_log == "0") {
+   y_min = 0
+   y_log_str = ""
+} else {
+   if (y_min == 0.0) {
+      y_min = 0.01
+      writeLines ("   WARNING: parameter y_min cannot be equals to 0.0 with logarithmic Y-axis; forced to 0.01 !")
+      flush.console()
+   }
+   y_log_str = "y"
+}
 
 # ------------------------------------------------------------------------
 # Exportamos datos a LaTeX (archivo .tex): mismo nombre que el grafico pero .tex
 # Lo hacemos despues de generar los graficos, por si el paquete "xtable" no
 # estuviera instalado.
+# latex_digits = decimales
 # ------------------------------------------------------------------------
+col_names = c(format(round(x[,1], latex_digits), nsmall=latex_digits))
 exportar_datos_latex (title, graph_filename, series_names,
-	x[,1], y, col_x_values_len, 2)	# 2 decimales
+	col_names, y, col_x_values_len, latex_digits, verbose)	
 
 
 # -------------------------------------------------------------------------
 # Generamos graficos
 # -------------------------------------------------------------------------
 
-print ("Generating graphs ...")
+if (verbose == "1") {
+   writeLines ("Generating graphs ...")
+}
 
 # Invocamos a la funcion correspondiente segun tipo de grafico:
 #    0-lineas
@@ -298,34 +367,39 @@ print ("Generating graphs ...")
 #    2-lineas & puntos
 #    3-lineas & puntos superpuestos
 #    4-histograma (lineas verticales)
-#    5-Gr√°fico de barras apiladas
+#    5-Grafico de barras apiladas
 if ((graph_type >= 0) && (graph_type <= 4)) {
    plot_lines (title, subtitle, x_axis_title, y_axis_title,
                col_x_values, col_y_values, series_names,
                x_factor, y_factor, total_serie,
                x_min, x_max, y_min, y_max, y_log,
-               show_titles, show_grid, show_hotspots,
+               show_titles, show_grid,
                show_confint, confint_as_percentage, 
                text_size_title, text_size_subtitle, text_size_axis_ticks,
                text_size_axis_titles, text_size_legend, pos_legend,
-               graph_type=0, width_factor=1.0, height_factor=1.0, 
+               graph_type, width_factor, height_factor, 
                graph_filename, graph_fileext_seq,
-               x, y, data, num_series, num_series_legend)																									
+               x, y, data, num_series, num_series_legend, verbose)																									
 } else if (graph_type == 5) {
    plot_bars  (title, subtitle, x_axis_title, y_axis_title,
                col_x_values, col_y_values, series_names,
                x_min, x_max, y_log, show_titles, show_grid,
                pos_legend, width_factor, height_factor,
-               graph_filename, graph_fileext_seq, x, y, data)
+               graph_filename, graph_fileext_seq, x, y, data, verbose)
 
 }
 
-print ("Ok")
-return (TRUE)
+if (verbose == "1") {
+   writeLines ("Ok\n")
+}
+flush.console()
+
+#return (TRUE)
 
 }
 																															 
 # =========================================================================
+
 # =========================================================================
 # plot_lines: dibujar gr·ficas de varias series (cada serie una lÌnea)
 #             Se generan tantos gr·ficos como extensiones especificadas
@@ -336,13 +410,13 @@ plot_lines = function ( title, subtitle, x_axis_title, y_axis_title,
       col_x_values, col_y_values, series_names,
       x_factor, y_factor, total_serie,
       x_min, x_max, y_min, y_max, y_log,
-      show_titles, show_grid, show_hotspots,
+      show_titles, show_grid,
 	  show_confint, confint_as_percentage, 
       text_size_title, text_size_subtitle, text_size_axis_ticks,
       text_size_axis_titles, text_size_legend, pos_legend,
       graph_type=0, width_factor=1.0, height_factor=1.0, 
       graph_filename, graph_fileext_seq,
-      x, y, data, num_series, num_series_legend ) {
+      x, y, data, num_series, num_series_legend, verbose ) {
 
 # ------------------------------------------------------------------------
 # Construimos el gr·fico
@@ -359,6 +433,16 @@ if (graph_fileext_len < 1) {
    stop ("ERROR: graph parameter 'graph_fileext_seq' is empty.")
 }
 
+# ------------------------------------------------------------------------
+# Modificamos valores min/max para el eje Y: caso particular
+# Tenemos en cuenta si queremos eje Y en escala logarÌtmica o no
+# ------------------------------------------------------------------------
+if (y_log == "0") {
+   y_log_str = ""
+} else {
+   y_log_str = "y"
+}
+   
 # Generamos el grafico en los formatos especificados
 for (ext_idx in 1:graph_fileext_len) {
    # ------------------------------------------------------------------------
@@ -372,10 +456,12 @@ for (ext_idx in 1:graph_fileext_len) {
    # Puede dar error si estamos en modo texto para generar los png().
    # ------------------------------------------------------------------------
    if ( abrir_grafico (graph_filenameext, ext, width_factor, height_factor) == FALSE ) {
-      print (paste("   Suffix '", ext, "' unsupported.", sep=""))
+      writeLines (paste("   WARNING: suffix '", ext, "' unsupported.", sep=""))
       next
    }
-   print (paste("   File: '", graph_filenameext, "' ...", sep=""))
+   if (verbose == "1") {
+      writeLines (paste("   File: ", getwd(), "/", graph_filenameext, " ...", sep=""))
+   }
 
    # ------------------------------------------------------------------------
    # Par·metros del gr·fico: m·rgenes, ... 
@@ -410,12 +496,6 @@ for (ext_idx in 1:graph_fileext_len) {
       title    = ""
       subtitle = ""
    }
-   # Tenemos en cuenta si queremos eje Y en escala logarÌtmica o no
-   if (y_log == "0") {
-      y_log_str = ""
-   } else {
-      y_log_str = "y"
-   }
 
    # TamaÒo fuente letra: cex, cex.main, cex.sub, cex.axis, cex.lab (todos relativos a cex)
    # Valores anteriores: cex=0.8, cex.sub=0.7, cex.axis=1.0, cex.lab=1.0
@@ -423,7 +503,7 @@ for (ext_idx in 1:graph_fileext_len) {
       xlab=x_axis_title, ylab=y_axis_title, cex=1.0, cex.main=text_size_title,
       cex.sub=text_size_subtitle, cex.axis=text_size_axis_ticks,
       cex.lab=text_size_axis_titles,
-	xlim=c(x_min,x_max), ylim=c(y_min,y_max), lty=1, log=y_log_str)
+	  xlim=c(x_min,x_max), ylim=c(y_min,y_max), lty=1, log=y_log_str)
 
    # --------------------------------------------------------------
    # Si queremos que aparezcan 'ticks' en todos los ejes
@@ -462,7 +542,7 @@ for (ext_idx in 1:graph_fileext_len) {
                  margin = (data[x_idx,col] * data[x_idx,col+1]) / 100.0
               } else {
                  # Si el CI (en col+1) ya viene como valor absoluto no hay que hacer nada
-                 margin = data[x_idx,col+1]
+                 margin = data[x_idx,col+1] / 100.0   # <--- ???
               }
               confint_bottom[x_idx,serie] = (data[x_idx,col] - margin) * y_factor   # y[x_idx,serie]
               confint_top   [x_idx,serie] = (data[x_idx,col] + margin) * y_factor
@@ -472,9 +552,9 @@ for (ext_idx in 1:graph_fileext_len) {
       # --------------------------------------------------------------
       # Mostramos valores del intervalo de confianza
       # --------------------------------------------------------------
-      #print ("   Confidence Interval")
-      #print (paste("   Expresado en %? = ", confint_as_percentage, sep=""))
-      #print (paste("   [", confint_top, " .. ", confint_bottom, "]", sep=""))
+      #writeLines ("   Confidence Interval")
+      #writeLines (paste("   Expresado en %? = ", confint_as_percentage, sep=""))
+      #writeLines (paste("   [", confint_top, " .. ", confint_bottom, "]", sep=""))
 
       # Dibujamos intervalos de confianza
       for (serie in 1:col_y_values_len) {
@@ -482,8 +562,13 @@ for (ext_idx in 1:graph_fileext_len) {
           segments (x[,serie], confint_top[,serie],
                     x[,serie], confint_bottom[,serie],
                     lwd=1.5, cex=0.5, col="grey65", lty=1);
-          # Dibujamos bigotes sup./inf.
-          ancho_bigotes = (x_max-x_min)/100
+          # Obtenemos dimensiones finales del grafico: vector con x-min, x-max, y-min, y-max
+          plotDim = par("usr")
+          plot_x_min = plotDim[1];
+          plot_x_max = plotDim[2];
+          plot_width = plot_x_max-plot_x_min
+          # Dibujamos bigotes sup./inf. (ancho = 1% del grafico)
+          ancho_bigotes = plot_width/100
           segments (x[,serie]-ancho_bigotes, confint_top[,serie],
                     x[,serie]+ancho_bigotes, confint_top[,serie],
                     lwd=1.5, cex=0.5, col="grey65", lty=1);
@@ -534,18 +619,20 @@ for (ext_idx in 1:graph_fileext_len) {
       tipo = "h"              
    } else {
       tipo = "o"                   # Como lineas & puntos (superpuestos) (por defecto)
-   }
+   }  
    for (serie in col_y_values_len:1) {
        # Serie de datos
        lty[serie] = "solid"  # linetypes[serie+2] o serie (da error en lty=lty[serie], pero si se pone lty=serie no)
        lwd[serie] = 1
-       # if ( show_hotspots=="1" ) {
+       #if ( show_hotspots=="1" ) {
        if ((graph_type >= 1) && (graph_type <= 3)) {
           pch[serie] = serie
        }
        col[serie] = colores[serie]
-       lines(x[,1],  y[,serie], type=tipo, lty=lty[serie], lwd=lwd[serie], pch=serie, col=col[serie])
-       #points(x, y[,serie], pch=serie)  # Si quisiÈramos mostrar sÛlo puntos
+       lines(x[,1],  y[,serie], type=tipo, lty=lty[serie], lwd=lwd[serie], pch=pch[serie], col=col[serie])
+       #if ( show_hotspots=="1" ) {
+       #   points(x[,1], y[,serie], pch=serie)  # Si quisiÈramos mostrar sÛlo puntos
+       #}
    }
 
    # --------------------------------------------------------------
@@ -569,7 +656,7 @@ for (ext_idx in 1:graph_fileext_len) {
       # - inset = inset distance(s) from the margins as a fraction of the plot region when legend is placed by keyword 
 
       legend (x=xLegend, legend=series_names, cex=text_size_legend,  #cex=legend_cex,
-              lty=lty, lwd=lwd, pch=pch, col=col, # pch=hotspot,  
+              lty=lty, lwd=lwd, pch=pch, col=col, 
               box.lty=0, xjust=0, inset=c(0.01,0.01)) # y=yLegend,
    }
    # Cerrar el gr·fico
@@ -580,6 +667,7 @@ for (ext_idx in 1:graph_fileext_len) {
 }
 
 # =========================================================================
+
 # =========================================================================
 # plot_bars: dibujar gr·ficas porcentajes
 # =========================================================================
@@ -587,7 +675,7 @@ for (ext_idx in 1:graph_fileext_len) {
 plot_bars = function ( title, subtitle, x_axis_title, y_axis_title,
     col_x_values, col_y_values, series_names, x_min, x_max, y_log,
     show_titles, show_grid, pos_legend, width_factor=1.0, height_factor=1.0,
-    graph_filename, graph_fileext_seq, x, y, data ) {
+    graph_filename, graph_fileext_seq, x, y, data, verbose ) {
 
 # ------------------------------------------------------------------------
 # Modificamos valores min/max para el eje Y: caso particular
@@ -597,9 +685,6 @@ if (y_log == "0") {
    y_min = 0
    y_log_str = ""
 } else {
-   if (y_min == 0.0) {
-      y_min = 0.01 # Si la escala es logarÌtmica en el eje 'y', el mÌnimo no puede ser 0.0 (error).
-   }
    y_log_str = "y"
 }
 y_max = 100.1   # Debe ser > 100.0; Si es = 100.0 no llega a salir el valor 100 en el eje.
@@ -629,10 +714,12 @@ for (ext_idx in 1:graph_fileext_len) {
    # Construimos nombre de archivo
    graph_filenameext = paste (graph_filename, ".", ext, sep="")
    if ( abrir_grafico (graph_filenameext, ext) == FALSE ) {
-      print (paste("   Suffix '", ext, "' unsupported.", sep=""))
+      writeLines (paste("   WARNING: suffix '", ext, "' unsupported.", sep=""))
       next
    }
-   print (paste("   File: '", graph_filenameext, "' ...", sep=""))
+   if (verbose == "1") {
+      writeLines (paste("   File: '", getwd(), "/", graph_filenameext, "' ...", sep=""))
+   }
 
    # ------------------------------------------------------------------------
    # Par·metros del gr·fico: m·rgenes, ... 
@@ -810,12 +897,14 @@ rtrim<-function (str) {
 # importar_datos: leer un fichero de datos y resumirlos para gr·ficas
 # =========================================================================
 
-importar_datos = function (data_path, data_filename, data_fileext) {
+importar_datos = function (data_path, data_filename, data_fileext, verbose) {
    # Construimos el nombre del fichero de entrada (datos) y salida (gr·fico)
    filename  = paste (data_filename, ".", data_fileext, sep="")
    filename = file.path (data_path, filename, fsep = .Platform$file.sep)
    # Leemos los datos
-   print (paste("Loading data file '", filename, "' ...", sep=""))
+   if (verbose == "1") {
+      writeLines (paste("Loading data file '", filename, "' ...", sep=""))
+   }
    data = read.table (filename, header=TRUE)
    return (data)
 }
@@ -825,7 +914,7 @@ importar_datos = function (data_path, data_filename, data_fileext) {
 # exportar_datos: escribir un fichero de datos ya resumidos para gr·ficas
 # =========================================================================
 
-exportar_datos = function (data_path, data_filename, data_fileext, x, y) {
+exportar_datos = function (data_path, data_filename, data_fileext, x, y, verbose) {
    # Creamos un data frame combinando los vectores x e y
    data = data.frame(y)  # cbind(x, y)
    data.row.names = x
@@ -833,7 +922,9 @@ exportar_datos = function (data_path, data_filename, data_fileext, x, y) {
    filename  = paste (data_filename, ".", data_fileext, sep="")
    filename = file.path (data_path, filename, fsep = .Platform$file.sep)
    # Escribimos los datos
-   print (paste("Writting data file '", filename, "' ...", sep=""))
+   if (verbose == "1") {
+      writeLines (paste("Writting data file '", filename, "' ...", sep=""))
+   }
    write.table (data, filename, row.names=TRUE, col.names=TRUE)
 }
 
@@ -843,18 +934,25 @@ exportar_datos = function (data_path, data_filename, data_fileext, x, y) {
 # =========================================================================
 
 exportar_datos_latex = function (title, filename, row_names, col_names,
-                                 data, col_x_values_len, decimales) {
+                                 data, col_x_values_len, latex_digits, verbose) {
    # Nombre de archivo (igual que el gr·fico pero .tex)
    filename_tex = paste (filename, ".tex", sep="")
-   print (paste("Exporting data to LaTeX '", filename_tex, "' ...", sep=""))
+   if (verbose == "1") {
+      writeLines (paste("Exporting data to LaTeX (", latex_digits, " decimals) ...", sep=""))
+      writeLines (paste("   File: ", getwd(), "/", filename_tex, sep=""))
+   }
 
    # Tabla latex (reservamos una fila y una columna para cabeceras)
    # Por seguridad, ponemos un caracter de escape delante de los subrayados
-
    # Al intentar cargar este fichero con source R da un error:
    #Error: '\_' is an unrecognized escape in character string starting "\_"
    #new_names = sapply (strsplit(row_names,"_"), paste, collapse="\_")
-   new_names   = sapply (strsplit(row_names,"_"), paste, collapse="\\_")
+   # Poniendo dos "\\_" aparece en la tabla $\backslash$\_
+   # Con versiones recientes de xtable no es necesario; si se sustituye cada subrayado
+   # por "\\_" aparece en la tabla una barra adicional (lo sustituye por $\backslash$\_)
+   #new_names = sapply (strsplit(row_names,"_"), paste, collapse="\\_")
+   new_names = row_names
+   
    table_names = list (new_names, col_names)
    table_data  = array (0, c(NROW(row_names), NROW(col_names)), dimnames=table_names)
    for (row in 1:NROW(row_names)) {
@@ -862,9 +960,9 @@ exportar_datos_latex = function (title, filename, row_names, col_names,
          table_data[row,col] = data[col,row]
       }
    }
-   table_digits  = array (decimales, c(col_x_values_len+1))   # decimales en todas las columnas (1 valor=se repite)
+   table_digits  = array (latex_digits, c(col_x_values_len+1))   # decimales en todas las columnas (1 valor=se repite)
    table_caption = paste (title, " data", sep="")
-   #table_label   = paste (simulset, ":data:", title, sep="")
+   #table_label  = paste (simulset, ":data:", title, sep="")
    table_label   = paste ("data:", title, sep="")
    tabla_latex   = xtable (table_data, digits=table_digits, caption=table_caption, label=table_label)
 
@@ -898,10 +996,10 @@ abrir_grafico = function (filename, fileext, width_factor=1.0, height_factor=1.0
       # pero en Linux sÛlo se puede utilizar png desde X11, no desde la consola.
       # Para evitar problemas, se utiliza bitmap(), que no requiere X11.
       if ( capabilities("png") ) {
-         #print ("    Modo grafico: generando .png con png()")
+         #writeLines ("    Modo grafico: generando .png con png()")
          try (png (filename, width=480*width_factor, height=480*height_factor), silent=FALSE)
       } else {
-         #print ("    Modo no grafico: generando .png con bitmap()")
+         #writeLines ("    Modo no grafico: generando .png con bitmap()")
          try (bitmap (filename, type="pnggray"), silent=FALSE)         
       }
    } else {
