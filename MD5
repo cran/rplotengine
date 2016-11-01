@@ -1,6 +1,11 @@
-71c1375f18e8e6ffb3fc77fdb9817005 *DESCRIPTION
-3f8350a7b90552c9797221a91216a40f *NAMESPACE
-26108630e05dc2cc7206ae1ea82043ed *R/rplotengine.R
+14e011c99e7798872b9504d1af5f6a2d *DESCRIPTION
+07e6c01167f8af934234f03fa6fd5fa0 *NAMESPACE
+4d145d9b13f30633cce36872f24229af *R/rplotengine.R
+a268413f95c9f965b9542fd9fac3bc70 *inst/extdata/mydata.txt
+37f5ae660fa628568241c4241f3fb41f *inst/extdata/mygraph.arg
 a268413f95c9f965b9542fd9fac3bc70 *inst/mydata.txt
-369663f9b3d50da0750cbd9b1faf4e0a *inst/mygraph.arg
-5b0a385ee88d0001c8f6c7d4c383c105 *man/rplotengine.Rd
+37f5ae660fa628568241c4241f3fb41f *inst/mygraph.arg
+c479ecc85fa245722a01d01391339d50 *man/figures/mygraph.eps
+cab0dca29b0952707ab97caeed8731fa *man/figures/mygraph.pdf
+8c21cf7c7abcdadaa7bb294ce9e5d46f *man/figures/mygraph.png
+fbb2a42f4cd09542c30a46893889ae03 *man/rplotengine.Rd

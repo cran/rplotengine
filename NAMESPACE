@@ -4,4 +4,7 @@
 # -----------------------------------------------
 export(rplotengine)
 import(xtable)
+importFrom("grDevices", "bitmap", "dev.off", "grey", "png", "postscript")
+importFrom("graphics", "barplot", "grid", "legend", "lines", "par", "plot", "segments", "text")
+importFrom("utils", "flush.console", "read.table", "write.table") 
 

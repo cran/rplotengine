@@ -45,9 +45,9 @@ The meaning of each parameter is explained below:
 \item{subtitle    }{Subtitle that can be shown in the graph. It is required to specify \code{show_titles=1}; otherwise the value will be ignored.}
 \item{x_axis_title}{Title for the X-axis.}
 \item{y_axis_title}{Title for the Y-axis.}
-\item{col_x_values}{Column number of the values for the X-axis within the input data file (starting from 1).}
-\item{col_y_values}{List with the columns number within the input data file corresponding to the series to be plotted. In case of using confidence intervals, each column within the input data file should be followed by another column containing its correspondig confidence interval values, but that column is not specified here, and this is why a tipical value for this argument is something like: 2,4,6,8 (being 3,5,7,9 the corresponding columns for the confidence intervals).}
-\item{series_names}{Name for the series to be plotted as should be shown in the legend. The number of names specified should match with the number of columns speficied in the argument col_y_values. In case of showing an overall serie (argumento total_serie greater than 0), an additional name for it should be specified too.}
+\item{col_x_values}{Column number of the values for the X-axis within the input data file (1-based). DEPRECATED: since 1.0-6 the first column (1) is always the values for the X-axis (this argument will be ignored).}
+\item{col_y_values}{List with the columns number within the input data file corresponding to the series to be plotted. In case of using confidence intervals, each column within the input data file should be followed by another column containing its corresponding confidence interval values, but that column is not specified here, and this is why a typical value for this argument is something like: 2,4,6,8 (being 3,5,7,9 the corresponding columns for the confidence intervals). DEPRECATED: since 1.0-6 all columns in the data file will be used (this argument will be ignored).}
+\item{series_names}{Name for the series to be plotted as should be shown in the legend. The number of names specified should match with the number of columns specified in the argument col_y_values. In case of showing an overall serie (total_serie greater than 0), an additional name for it should be specified too.}
 \item{x_factor    }{Value which the X-axis values will be multiplied by (usually 1).}
 \item{y_factor    }{Value which the Y-axis values will be multiplied by (usually 1).}
 \item{total_serie }{Value ranged from 0 to 4, to indicate if an additional summary serie should be shown. The values mean: 0-none; 1-sum of all the series; 2-average of all the series; 3-constant value (specified by \code{total_value}); 4-proportional to the x value (proportion specified by \code{total_value}). In case of a total serie be shown (argument total_serie greater than 0), an additional name need to be specified in the list of names (argumento series_names).}
@@ -70,7 +70,7 @@ The meaning of each parameter is explained below:
 \item{graph_type           }{Type of graph to generate (0:lines; 1:stacked bars).}
 \item{width_factor         }{Graph width. The value specified will be a proportion to the normal size (1.0): for a greater font size specify values > 1.0; for smaller font size specify values < 1.0.}
 \item{height_factor        }{Graph height. The value specified will be a proportion to the normal size (1.0): for a greater font size specify values > 1.0; for smaller font size specify values < 1.0.}
-\item{latex_digits         }{Decimal digits for tables exported to latex with the xtable package.}
+\item{latex_digits         }{Decimal digits for tables exported to latex with the 'xtable' package.}
 \item{verbose              }{Value 0/1 to indicate if debug messages are printed on the screen.}
 \item{data_filename        }{Path and name for the input data file. Path may be absolute or relative to the current directory.}
 \item{graph_filename       }{Path and name for the graphs to be generated (without suffix). Path may be absolute or relative to the current directory.}
@@ -88,8 +88,8 @@ title=mytitle
 subtitle=mysubtitle
 x_axis_title=Total offered traffic per AC (Mbit/s)
 y_axis_title=Achieved throughput ratio
-col_x_values=1
-col_y_values=2,4,6,8
+#col_x_values=1         # deprecated (ignored)
+#col_y_values=2,4,6,8   # deprecated (ignored)
 series_names=Serie 1,Serie 2,Serie 3,Serie 4,Total
 x_factor=1
 y_factor=1
@@ -134,11 +134,22 @@ As we can see, column #1 is the X-axis values, as set with the \code{col_x_value
 
 As a result of executing the command \code{rplotengine("mygraph.arg")}, two graphs files will be generated: \file{mygraph.png} and \file{mygraph.eps}. In addition, a LaTeX file \file{mygraph.tex} will be written with the same values as in the input data file but formatted as a table ready for be imported from a LaTeX document.
 
+% Las imagenes se guardan en el subdrectorio man/figures y se referencian
+% con \figure relativas a ese directorio
+%\if{latex}{\figure{mygraph.png}{options: width="60\%" alt="File: mygraph.png"}}
+%\if{latex}{\figure{mygraph.eps}{options: width=7cm alt="File: mygraph.eps"}}
+
+%\Sexpr[stage=render,results=rd,echo=FALSE]{
+%library(xtable)
+%library(rplotengine)
+%rplotengine('mygraph.arg')
+%}
+
 }
 
 % Valor retornado por la funcion
 \value{ 
-   This function return a logical value indicating if the operation has succeeded (TRUE) or not (FALSE).
+   This function return a logical value indicating if the operation ended successfully (TRUE) or not (FALSE).
 }
 
 % Ver tambien
@@ -151,8 +162,7 @@ As a result of executing the command \code{rplotengine("mygraph.arg")}, two grap
 
 % Autor
 \author{
-   \href{http://atc.umh.es/pgarrido/}{P. Pablo Garrido Abenza} (\email{pgarrido@umh.es}) \cr
-   \href{http://atc.umh.es/gatcom/}{Grupo de Arquitectura y Tecnologia de COMputadores (GATCOM)} \cr
+   {Pedro-Pablo Garrido Abenza} (\email{pgarrido@umh.es}) \cr
    \href{http://www.umh.es}{Miguel Hernandez University} (Elche, Spain)
 }
 
@@ -163,5 +173,6 @@ rplotengine ()
 ## Generate the graphs as defined in the 'mygraph.arg' file.
 rplotengine ("mygraph.arg")
 }
+
 
 
