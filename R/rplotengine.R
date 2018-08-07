@@ -26,11 +26,11 @@ R_VARS = c( "title", "subtitle", "x_axis_title", "y_axis_title",
     "col_x_values", "col_y_values", "series_names",
     "x_factor", "y_factor", "total_serie", "total_value",
     "x_min", "x_max", "y_min", "y_max", "y_log",
-    "show_titles", "show_grid",
+    "show_titles", "show_grid", #"show_hotspots",
     "show_confint", "confint_as_percentage",
     "text_size_title", "text_size_subtitle",
     "text_size_axis_ticks", "text_size_axis_titles", "text_size_legend",
-    "pos_legend", "graph_type", "width_factor", "height_factor", "latex_digits", "verbose",
+    "pos_legend", "graph_type", "width_factor", "height_factor", "dpi", "latex_digits", "verbose",
     "data_filename", "graph_filename", "graph_fileext_seq" )
 
 # Para evitar los siguientes mensajes al chequear el paquete:
@@ -67,6 +67,7 @@ pos_legend = ""
 graph_type = ""
 width_factor = ""
 height_factor = ""
+dpi = "72"
 latex_digits = ""
 verbose = "1"
 data_filename = ""
@@ -103,7 +104,7 @@ if (!file.exists(args_file)) {
 } else {
     full_args_file = args_file
 }
-writeLines (paste("Graph parameters file ...", sep=""))
+writeLines ("Graph parameters file ...")
 writeLines (paste("   File: ", full_args_file, sep=""))
 
 # ----------------------------------------------------------
@@ -119,13 +120,19 @@ for (l in 1:args_rows) {
    if (args_lines[l] == "") next
    if (substr (args_lines[l],1,1) == '#') next
    arg = unlist(strsplit(args_lines[l],"\\="))
-   if (length(arg) != 2) {
+   if (length(arg) == 2) {
+      # Lo normal es 2 (nombre=valor)
+      arg_name  = arg[1]
+      arg_value = arg[2]
+   } else if (length(arg) == 1) {
+      # Podria no haber valor (p.e. subtitle, ...)
+      arg_name  = arg[1]
+      arg_value = ""
+   } else {
       writeLines ( paste("Syntax error in input file, line: ", l, sep="") )
       writeLines ( args_lines[l] )
       return (FALSE)
    }
-   arg_name  = arg[1]
-   arg_value = arg[2]
    if (arg_name == R_VARS[var]) {
       # Si el archivo argumentos se ha escrito en el orden esperado y sin comentarios ira mas rapido
       i = var
@@ -152,6 +159,18 @@ for (l in 1:args_rows) {
 
 # ------------------------------------------------------------------------
 # Leemos los datos para el grafico
+#
+# Format:
+#    - Without row header
+#    - Columns separated by tabulator
+#    - Floating values with dot point '.'
+#    - Comments allowed with '#' character.
+#
+# Example:
+#    0	0.104	0.0	    13.825   # Comment 0
+#    1	4.158	16.84	14.865   # Comment 1
+#    2	6.757	22.453	25.884   # Comment 2
+#    3	7.484	27.755	18.607   # Comment 3
 # ------------------------------------------------------------------------
 
 # Nos aseguramos de que existe el archivo de datos de entrada
@@ -176,22 +195,23 @@ if (!file.exists(data_filename)) {
 
 # Leemos los datos (simbolo # se utiliza para comentarios con read.table)
 if (verbose == "1") {
-  writeLines (paste("Loading data file ...", sep=""))
+  writeLines ("Loading data file ...")
   writeLines (paste("   File: ", full_data_filename, sep=""))
 }
-data = read.table (full_data_filename, header=TRUE)
+data = read.table (full_data_filename, sep="\t", header=FALSE, fill=TRUE, comment.char="#")
 data_cols = NCOL(data)
 data_rows = NROW(data)
 
 # Debug: mostramos los datos
 if (verbose == "1") {
-  writeLines (paste("   cols: ", NCOL(data), ifelse(data_cols==0, " --> ERROR", ""), sep=""))
-  writeLines (paste("   rows: ", NROW(data), ifelse(data_rows==0, " --> ERROR", ""), sep=""))
-  #print (data)
+   writeLines (paste("   cols: ", NCOL(data), ifelse(data_cols==0, " --> ERROR", ""), sep=""))
+   writeLines (paste("   rows: ", NROW(data), ifelse(data_rows==0, " --> ERROR", ""), sep=""))
+   print (data)
+   writeLines (paste("   CI: ", show_confint, sep=""))
 }
 
-if ((data_cols==0) | (data_rows==0)) { 
-  return (FALSE)
+if ((data_cols==0) | (data_rows==0)) {
+   return (FALSE)
 }
 
 # -------------------------------------------------------------------------
@@ -199,37 +219,33 @@ if ((data_cols==0) | (data_rows==0)) {
 # -------------------------------------------------------------------------
 
 # Columnas correspondientes a los valores del eje X y series del eje Y
-#    Version anterior: especificando una lista de columnas desde un archivo
+#    Version anterior: especificando una lista de columnas desde un archivo (grande)
 #col_x_values  = as.numeric (col_x_values)
 #col_y_values  = as.numeric (unlist (strsplit (col_y_values,",")))
-#    Version actual: ignorando estos argumentos; se considera todo el archivo
+#    Version actual: ignorando estos argumentos; se considera todo el archivo (mas pequenyo)
 #       - Los valores del eje X son los de la primera columna
 #       - Los valores del eje Y: si hay CI cada 2 columnas; si no todas
 col_x_values  = 1
-if (show_confint == "0") {
+if ((show_confint == "0") || (NCOL(data)<=2)) {
+    # 2, 3, 4, 5, ...
   #col_y_values = array(seq(1, (data_cols-1), by=1), dim=cols-1)
-  col_y_values = seq(2, (data_cols-1), by=1)
+  col_y_values = seq(2, data_cols, by=1)
 } else {
+    # 2, 4, 6, 8, ...
   #col_y_values = array(seq(1, (data_cols-1)*2, by=2), dim=cols-1)
   col_y_values = seq(2, (data_cols-1), by=2)
 }
 
 series_names_lst = unlist(strsplit(series_names,","))
-x_factor      = as.double(x_factor)
-y_factor      = as.double(y_factor)
-total_serie   = as.numeric(total_serie)
-total_value   = as.double(total_value)
-
-# Valores min/max se calculan una vez leidos y procesados los datos
-#x_min
-#x_max
-#y_min
-#y_max
+x_factor    = as.double(x_factor)
+y_factor    = as.double(y_factor)
+total_serie = as.numeric(total_serie)
+total_value = as.double(total_value)
 
 #y_log         = ifelse((y_log=="0"), FALSE, TRUE)
 #show_titles   = ifelse((show_titles=="0"), FALSE, TRUE)
 #show_grid     = ifelse((show_grid=="0"), FALSE, TRUE)
-##show_hotspots = ifelse((show_hotspots=="0"), FALSE, TRUE)
+#show_hotspots = ifelse((show_hotspots=="0"), FALSE, TRUE)
 #show_confint  = ifelse((show_confint=="0"), FALSE, TRUE)
 #confint_as_percentage = ifelse((confint_as_percentage=="0"), FALSE, TRUE)
 
@@ -242,6 +258,7 @@ pos_legend    = as.numeric (pos_legend)
 graph_type    = as.numeric (graph_type)
 width_factor  = as.numeric (width_factor)
 height_factor = as.numeric (height_factor)
+dpi           = as.numeric (dpi)
 latex_digits  = as.numeric (latex_digits)
 graph_fileext_seq = unlist (strsplit(graph_fileext_seq,","))
 
@@ -307,58 +324,68 @@ if (series_names_len >= num_series_legend) {
 }
 
 # Debug: series names
-if (verbose == "1") {
-   for (serie in 1:num_series) {
-      writeLines (paste("   Serie #", serie, ": ", series_names_lst[serie], " (col=", col_y_values[serie], ")", sep=""))
-   }
-}
+#if (verbose == "1") {
+#   for (serie in 1:num_series) {
+#      writeLines (paste("   Serie #", serie, ": ", series_names_lst[serie], " (col=", col_y_values[serie], ")", sep=""))
+#   }
+#}
 
 # Para cada valor del eje x (fila del archivo de datos)
 for (x_idx in 1:col_x_values_len) {
    # Obtenemos el valor del eje x, que sera el mismo para todas las series (aplicando el factor)
    x_value = data[x_idx,col_x_values] * x_factor 	# row.names(data)[x_idx] * x_factor
    # Obtenemos el valor del eje y para Para todas las series (aplicando el factor)
-   for (serie in 1:col_y_values_len) {              
+   for (serie in 1:col_y_values_len) {
        col = col_y_values[serie]
+       y_value = data[x_idx,col] * y_factor
        # Por seguridad, comprobamos que la columna especificada no se salga de rango
        if (col>NCOL(data)) {
           writeLines (paste("   Column ", col, " for serie #", serie, " is out of range [0..", NCOL(data), "]", sep=""));
           return (FALSE)
        }
        x[x_idx,serie] = x_value		# Necesario solo para calculo del CI
-       y[x_idx,serie] = data[x_idx,col] * y_factor
+       y[x_idx,serie] = y_value
        # Para series total (1-TOTAL o 2-AVERAGE)
-       if ((total_serie == 1) || (total_serie == 2)) { 
-           y[x_idx,num_series] = y[x_idx,num_series] + y[x_idx,serie]   #data[x_idx,col]
-       }
+       #if ((total_serie == 1) || (total_serie == 2)) { 
+       #   y[x_idx,num_series] = y[x_idx,num_series] + y[x_idx,serie]   #data[x_idx,col]
+       #}
    }
    # Serie total
    if (total_serie > 0) {
       x[x_idx,num_series] = x_value
-      if (total_serie == 2) {         # 2-AVERAGE
-         y[x_idx,num_series] = y[x_idx,num_series] / col_y_values_len  #series_names_len??
+      if (total_serie == 1) {         # 1-TOTAL
+          y[x_idx,num_series] = sum(y[x_idx,], na.rm=TRUE)
+      } else if (total_serie == 2) {  # 2-AVERAGE
+          y[x_idx,num_series] = sum(y[x_idx,], na.rm=TRUE) / col_y_values_len  #series_names_len??
       } else if (total_serie == 3) {  # 3-CONSTANT
-         y[x_idx,num_series] = total_value * y_factor
+          y[x_idx,num_series] = total_value * y_factor
       } else if (total_serie == 4) {  # 4-X_PROPORTION
-         y[x_idx,num_series] = total_value * data[x_idx,col_x_values] * y_factor    # total_value * x_value
+          y[x_idx,num_series] = total_value * data[x_idx,col_x_values] * y_factor    # total_value * x_value
       }
    }
 }
 
+#if (verbose == "1") {
+#    writeLines (paste("X:", sep=""))
+#    print(x);
+#    writeLines (paste("Y:", sep=""))
+#    print(y);
+#}
+
 # ------------------------------------------------------------------------
 # Calculamos valores min/max en el caso de no haber especificado "automatic"
 # ------------------------------------------------------------------------
-x_min = ifelse((x_min=="automatic"), min(x,na.rm=TRUE),                as.double (x_min))
-x_max = ifelse((x_max=="automatic"), max(x,na.rm=TRUE),                as.double (x_max))
-y_min = ifelse((y_min=="automatic"), min(y[,1:num_series],na.rm=TRUE), as.double (y_min))
-y_max = ifelse((y_max=="automatic"), max(y[,1:num_series],na.rm=TRUE), as.double (y_max))
+x_min = ifelse((x_min=="automatic"), min(x,na.rm=TRUE),                as.double(x_min))
+x_max = ifelse((x_max=="automatic"), max(x,na.rm=TRUE),                as.double(x_max))
+y_min = ifelse((y_min=="automatic"), min(y[,1:num_series],na.rm=TRUE), as.double(y_min))
+y_max = ifelse((y_max=="automatic"), max(y[,1:num_series],na.rm=TRUE), as.double(y_max))
 
 # ------------------------------------------------------------------------
 # Comprobamos valor y_min para el eje Y: caso particular
 # Si la escala es logaritmica en el eje 'y', el minimo no puede ser 0.0 (error).
 # ------------------------------------------------------------------------
 if (y_log == "0") {
-   y_min = 0
+    #y_min = 0
    y_log_str = ""
 } else {
    if (y_min == 0.0) {
@@ -400,18 +427,18 @@ if ((graph_type >= 0) && (graph_type <= 4)) {
                col_x_values, col_y_values, series_names_lst,
                x_factor, y_factor, total_serie,
                x_min, x_max, y_min, y_max, y_log,
-               show_titles, show_grid,
+               show_titles, show_grid, #show_hotspots,
                show_confint, confint_as_percentage, 
                text_size_title, text_size_subtitle, text_size_axis_ticks,
                text_size_axis_titles, text_size_legend, pos_legend,
-               graph_type, width_factor, height_factor, 
+               graph_type, width_factor, height_factor, dpi,
                graph_filename, graph_fileext_seq,
                x, y, data, num_series, num_series_legend, verbose)																									
 } else if (graph_type == 5) {
    plot_bars  (title, subtitle, x_axis_title, y_axis_title,
                col_x_values, col_y_values, series_names_lst,
                x_min, x_max, y_log, show_titles, show_grid,
-               pos_legend, width_factor, height_factor,
+               pos_legend, width_factor, height_factor, dpi,
                graph_filename, graph_fileext_seq, x, y, data, verbose)
 
 }
@@ -437,11 +464,11 @@ plot_lines = function ( title, subtitle, x_axis_title, y_axis_title,
       col_x_values, col_y_values, series_names_lst,
       x_factor, y_factor, total_serie,
       x_min, x_max, y_min, y_max, y_log,
-      show_titles, show_grid,
+      show_titles, show_grid, #show_hotspots,
 	  show_confint, confint_as_percentage, 
       text_size_title, text_size_subtitle, text_size_axis_ticks,
       text_size_axis_titles, text_size_legend, pos_legend,
-      graph_type=0, width_factor=1.0, height_factor=1.0, 
+      graph_type=0, width_factor=1.0, height_factor=1.0, dpi=72,
       graph_filename, graph_fileext_seq,
       x, y, data, num_series, num_series_legend, verbose ) {
 
@@ -482,12 +509,13 @@ for (ext_idx in 1:graph_fileext_len) {
    # Abrimos el grafico: png(...), postscript(...), X11(), ...
    # Puede dar error si estamos en modo texto para generar los png().
    # ------------------------------------------------------------------------
-   if ( abrir_grafico (graph_filenameext, ext, width_factor, height_factor) == FALSE ) {
+   if ( abrir_grafico (graph_filenameext, ext, width_factor, height_factor, dpi) == FALSE ) {
       writeLines (paste("   WARNING: suffix '", ext, "' unsupported.", sep=""))
       next
    }
    if (verbose == "1") {
-      writeLines (paste("   File: ", getwd(), "/", graph_filenameext, " ...", sep=""))
+      writeLines (paste("   Path: ", getwd(), sep=""))
+      writeLines (paste("   File: ", graph_filenameext, sep=""))
    }
 
    # ------------------------------------------------------------------------
@@ -557,8 +585,8 @@ for (ext_idx in 1:graph_fileext_len) {
    # --------------------------------------------------------------
    if (show_confint == "1") {
       # Arrays para intervalo de confianza
-      confint_top         = array(0, c(col_x_values_len,col_y_values_len))
-      confint_bottom      = array(0, c(col_x_values_len,col_y_values_len))
+      confint_top    = array(0, c(col_x_values_len,col_y_values_len))
+      confint_bottom = array(0, c(col_x_values_len,col_y_values_len))
       # Calculamos margenes superior e inferior para el intervalo de confianza de cada serie
       for (x_idx in 1:col_x_values_len) {          
           for (serie in 1:col_y_values_len) {
@@ -633,7 +661,7 @@ for (ext_idx in 1:graph_fileext_len) {
       lines(x[,1],  y[,num_series], type="l", lty=lty[s], lwd=lwd[s], pch=pch[s], col=col[s])
    }
    # Tipo de grafico para las series:
-   #    0-lineas, 1-puntos, 2-lineas & puntos, o 3-histograma
+   #    0-lineas, 1-puntos, 2-lineas & puntos (entrecortados), 3-lineas & puntos (superpuestos), o 4-histograma
    tipo = "l"
    if (graph_type == 0) {          # Como lineas
       tipo = "l"     
@@ -702,7 +730,7 @@ for (ext_idx in 1:graph_fileext_len) {
 
 plot_bars = function ( title, subtitle, x_axis_title, y_axis_title,
     col_x_values, col_y_values, series_names_lst, x_min, x_max, y_log,
-    show_titles, show_grid, pos_legend, width_factor=1.0, height_factor=1.0,
+    show_titles, show_grid, pos_legend, width_factor=1.0, height_factor=1.0, dpi=72,
     graph_filename, graph_fileext_seq, x, y, data, verbose ) {
 
 # ------------------------------------------------------------------------
@@ -741,7 +769,7 @@ for (ext_idx in 1:graph_fileext_len) {
    # ------------------------------------------------------------------------
    # Construimos nombre de archivo
    graph_filenameext = paste (graph_filename, ".", ext, sep="")
-   if ( abrir_grafico (graph_filenameext, ext) == FALSE ) {
+   if ( abrir_grafico (graph_filenameext, ext, dpi) == FALSE ) {
       writeLines (paste("   WARNING: suffix '", ext, "' unsupported.", sep=""))
       next
    }
@@ -966,7 +994,8 @@ exportar_datos_latex = function (title, filename, row_names, col_names,
    filename_tex = paste (filename, ".tex", sep="")
    if (verbose == "1") {
       writeLines (paste("Exporting data to LaTeX (", latex_digits, " decimals) ...", sep=""))
-      writeLines (paste("   File: ", getwd(), "/", filename_tex, sep=""))
+      writeLines (paste("   Path: ", getwd(), sep=""))
+      writeLines (paste("   File: ", filename_tex, sep=""))
    }
 
    # Tabla latex (reservamos una fila y una columna para cabeceras)
@@ -980,6 +1009,8 @@ exportar_datos_latex = function (title, filename, row_names, col_names,
    #new_names = sapply (strsplit(row_names,"_"), paste, collapse="\\_")
    new_names = row_names
    
+   
+   
    table_names = list (new_names, col_names)
    table_data  = array (0, c(NROW(row_names), NROW(col_names)), dimnames=table_names)
    for (row in 1:NROW(row_names)) {
@@ -989,14 +1020,17 @@ exportar_datos_latex = function (title, filename, row_names, col_names,
    }
    table_digits  = array (latex_digits, c(col_x_values_len+1))   # decimales en todas las columnas (1 valor=se repite)
    table_caption = paste (title, " data", sep="")
+   # En el titulo insertamos '\' delante de '%' (si hay)
+   #table_caption = sapply (strsplit(table_caption,"%"), paste, collapse="\\%")
+   table_caption = gsub("%", "\\%", table_caption, fixed=TRUE)  # fixed=TRUE para no utilizar expr. regular
    #table_label  = paste (simulset, ":data:", title, sep="")
-   table_label   = paste ("data:", title, sep="")
+   table_label   = paste ("data:", basename(filename_tex), sep="")
    tabla_latex   = xtable (table_data, digits=table_digits, caption=table_caption, label=table_label)
 
    # Package: xtable - Version: 1.4-3
    #print.xtable (tabla_latex, file=filename_tex, table.placement="h!", size="scriptsize")
    # Package: xtable - Version: 1.5-2
-   print (tabla_latex, file=filename_tex, table.placement="h!", size="scriptsize")
+   print (tabla_latex, file=filename_tex, table.placement="!ht", size="scriptsize")
 }
 
 
@@ -1012,27 +1046,38 @@ exportar_datos_latex = function (title, filename, row_names, col_names,
 #    http://lists.freedesktop.org/mailman/listinfo/xorg
 # =========================================================================
 
-abrir_grafico = function (filename, fileext, width_factor=1.0, height_factor=1.0) {
+abrir_grafico = function (filename, fileext, width_factor=1.0, height_factor=1.0, dpi=72) {
    if ((fileext == "ps") || (fileext == "eps")) {
       # Archivo .ps o .eps
+      # For true EPS: onefile=FALSE and paper="special"
       try (postscript (filename, onefile=FALSE, horizontal=FALSE, pointsize=12,
            width=6*width_factor, height=6*height_factor), silent=FALSE)
-   } else if (fileext == "png") {
-      # Archivo .png
-      # OJO: Para generar los .png, en windows se puede utilizar png(),
-      # pero en Linux solo se puede utilizar png desde X11, no desde la consola.
-      # Para evitar problemas, se utiliza bitmap(), que no requiere X11.
-      if ( capabilities("png") ) {
-         #writeLines ("    Modo grafico: generando .png con png()")
-         try (png (filename, width=480*width_factor, height=480*height_factor), silent=FALSE)
-      } else {
-         #writeLines ("    Modo no grafico: generando .png con bitmap()")
-         try (bitmap (filename, type="pnggray"), silent=FALSE)         
-      }
    } else {
-      # No se reconoce la extension
-      #try (X11(), silent=FALSE)   # Generamos una vista previa
-      return (FALSE)
+      w = 480 * width_factor
+      h = 480 * height_factor
+      if (dpi != 72) {
+          # It is necessary to take into account the resolution (dpi) to compute the width and height
+          res_factor = dpi/72
+          w = w * res_factor
+          h = h * res_factor
+      }
+      if (fileext == "png") {
+         # Archivo .png
+         # OJO: Para generar los .png, en windows se puede utilizar png(),
+         # pero en Linux solo se puede utilizar png desde X11, no desde la consola.
+         # Para evitar problemas, se utiliza bitmap(), que no requiere X11.
+         if ( capabilities("png") ) {
+            #writeLines ("    Modo grafico: generando .png con png()")
+            try (png (filename, units="px", width=w, height=h, res=dpi), silent=FALSE)
+         } else {
+            #writeLines ("    Modo no grafico: generando .png con bitmap()")
+            try (bitmap (filename, type="pnggray", units="px", width=w, height=h, res=dpi), silent=FALSE)
+         }
+      } else {
+         # No se reconoce la extension
+         #try (X11(), silent=FALSE)   # Generamos una vista previa
+         return (FALSE)
+      }
    }
    return (TRUE)
 }

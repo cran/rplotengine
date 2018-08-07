@@ -54,7 +54,7 @@ The meaning of each parameter is explained below:
 \item{total_value }{Value used for the argument \code{total_serie} in certain cases (3 and 4); otherwise, it is ignored.}
 \item{x_min       }{Minimum value for the X-axis (usually 0). Specify 'automatic' (without the quotes) in order to consider the minimum value from the data.}
 \item{x_max       }{Maximum value for the X-axis. It is recommended to adjust automatically the graph depending on the data by assigning the value 'automatic' (without the quotes).}
-\item{y_min       }{Minimum value for the Y-axis (usually 0). Specify 'automatic' (without the quotes) in order to consider the minimum value from the data.}
+\item{y_min       }{Minimum value for the Y-axis (usually 0). Specify 'automatic' (without the quotes) in order to consider the minimum value from the data. When using logarithmic scale in the y-axis (y_log=1), this value cannot be 0.0; the script try to fix this automatically.}
 \item{y_max       }{Maximum value for the Y-axis (usually -1). It is recommended to adjust automatically the graph depending on the data by assigning the value 'automatic' (without the quotes).}
 \item{y_log       }{Value 0/1 to indicate if the Y-axis should be shown in logarithm scale (usually 0).}
 \item{show_titles          }{Value 0/1 to indicate if title and subtitle are shown.}
@@ -70,6 +70,7 @@ The meaning of each parameter is explained below:
 \item{graph_type           }{Type of graph to generate (0:lines; 1:stacked bars).}
 \item{width_factor         }{Graph width. The value specified will be a proportion to the normal size (1.0): for a greater font size specify values > 1.0; for smaller font size specify values < 1.0.}
 \item{height_factor        }{Graph height. The value specified will be a proportion to the normal size (1.0): for a greater font size specify values > 1.0; for smaller font size specify values < 1.0.}
+\item{dpi                  }{Dots per inch; by default, dpi=72. This parameter affects to the width and height of the chart.}
 \item{latex_digits         }{Decimal digits for tables exported to latex with the 'xtable' package.}
 \item{verbose              }{Value 0/1 to indicate if debug messages are printed on the screen.}
 \item{data_filename        }{Path and name for the input data file. Path may be absolute or relative to the current directory.}
@@ -113,6 +114,7 @@ pos_legend=1
 graph_type=0
 width_factor=1
 height_factor=1
+dpi=72
 latex_digits=3
 verbose=0
 data_filename=mydata.txt
@@ -123,8 +125,9 @@ graph_fileext_seq=png,eps
 In the previous file, a data file called \file{mydata.txt} is specified with the \code{data_filename} parameter. The following is an \strong{example of input data file} (slighly modified for clarity), which includes columns for the 95\% confidence intervals for each statistic:
 
 % The % characters must be preceded by \
+% From 1.0-6 the data file should not use header.
 \preformatted{
-x  Stat1      95\%CI   Stat2      95\%CI   Stat3      95\%CI  Stat4      95\%CI
+% x  Stat1      95\%CI   Stat2      95\%CI   Stat3      95\%CI  Stat4      95\%CI
 1  2.7021E+06 121023  1.9424E+06 76146   1.1396E+06 72200  1.1434E+06 60750
 2  1.9207E+06 189865  1.5882E+06 80444   1.0464E+06 60387  0.9824E+06 80031
 3  2.3384E+06 120934  1.8543E+06 116278  1.1471E+06 76487  1.3576E+06 84200
@@ -132,7 +135,11 @@ x  Stat1      95\%CI   Stat2      95\%CI   Stat3      95\%CI  Stat4      95\%CI
 
 As we can see, column #1 is the X-axis values, as set with the \code{col_x_values} parameter. On the other hand, four series are going to be shown, corresponding to the columns specified by \code{col_y_values} parameter: 2,4,6,8. The rest of columns (3,5,7,9) are the confidence intervals computed for each serie, respectively.
 
-As a result of executing the command \code{rplotengine("mygraph.arg")}, two graphs files will be generated: \file{mygraph.png} and \file{mygraph.eps}. In addition, a LaTeX file \file{mygraph.tex} will be written with the same values as in the input data file but formatted as a table ready for be imported from a LaTeX document.
+As a result of executing the command \code{rplotengine("mygraph.arg")} within the R console, two graphs files will be generated: \file{mygraph.png} and \file{mygraph.eps}. In addition, a LaTeX file \file{mygraph.tex} will be written with the same values as in the input data file but formatted as a table ready for be imported from a LaTeX document. \strong{NOTE:} the package 'xtable' should be installed and loaded before: \code{install.packages('xtable');library('xtable')}.
+
+The same can be achieved from the system console with the command:
+
+\code{Rscript -e "library('xtable');source('rplotengine.R');rplotengine('mygraph.arg')"}.
 
 % Las imagenes se guardan en el subdrectorio man/figures y se referencian
 % con \figure relativas a ese directorio

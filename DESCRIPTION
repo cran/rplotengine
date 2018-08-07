@@ -1,7 +1,7 @@
 Package: rplotengine
 Type: Package
-Version: 1.0-6
-Date: 2016-11-01
+Version: 1.0-7
+Date: 2018-08-08
 Title: R as a Plotting Engine
 Authors@R: c(person(given="Pedro-Pablo", family="Garrido Abenza", role=c("aut","cre"), email="pgarrido@umh.es"))
 Depends: R (>= 2.6.2), xtable
@@ -17,8 +17,8 @@ Description: Generate basic charts either by custom applications, or from a smal
 License: GPL (>= 2)
 URL: http://www.umh.es
 NeedsCompilation: no
-Packaged: 2016-11-01 11:20:14 UTC; pgarrido
+Packaged: 2018-08-07 22:25:47 UTC; pgarrido
 Author: Pedro-Pablo Garrido Abenza [aut, cre]
 Maintainer: Pedro-Pablo Garrido Abenza <pgarrido@umh.es>
 Repository: CRAN
-Date/Publication: 2016-11-01 15:21:14
+Date/Publication: 2018-08-07 22:40:03 UTC

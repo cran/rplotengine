@@ -28,6 +28,7 @@ pos_legend=1
 graph_type=0
 width_factor=1
 height_factor=1
+dpi=72
 latex_digits=3
 verbose=0
 data_filename=mydata.txt
