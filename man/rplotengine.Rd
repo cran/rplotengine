@@ -57,6 +57,7 @@ The meaning of each parameter is explained below:
 \item{y_min       }{Minimum value for the Y-axis (usually 0). Specify 'automatic' (without the quotes) in order to consider the minimum value from the data. When using logarithmic scale in the y-axis (y_log=1), this value cannot be 0.0; the script try to fix this automatically.}
 \item{y_max       }{Maximum value for the Y-axis (usually -1). It is recommended to adjust automatically the graph depending on the data by assigning the value 'automatic' (without the quotes).}
 \item{y_log       }{Value 0/1 to indicate if the Y-axis should be shown in logarithm scale (usually 0).}
+\item{smooth_data          }{Smooth data; 0.0 (data as is) to 1.0 (maximum).}
 \item{show_titles          }{Value 0/1 to indicate if title and subtitle are shown.}
 \item{show_grid            }{Value 0/1 to indicate if a grid are shown in the background.}
 \item{show_confint         }{Value 0/1 to indicate if confidence interval are shown.}
@@ -68,10 +69,12 @@ The meaning of each parameter is explained below:
 \item{text_size_legend     }{Font size for the series names in the legend. The value specified will be a proportion to the normal text (1.0), as explained before.}
 \item{pos_legend           }{Place for the legend in the graph, within a 3x3 grid with cells numbered from 1 to 9: 1-top left corner, 2-top middle; 3-top right corner; ... ; 9-bottom right corner. Specify a 0 value if a legend is not required.}
 \item{graph_type           }{Type of graph to generate (0:lines; 1:stacked bars).}
+\item{lines_width          }{Width of lines for series (default: 1.0); total series will be shown x3.}
+\item{hotspots_size        }{Size of the hotspots (default: 1.0).}
 \item{width_factor         }{Graph width. The value specified will be a proportion to the normal size (1.0): for a greater font size specify values > 1.0; for smaller font size specify values < 1.0.}
 \item{height_factor        }{Graph height. The value specified will be a proportion to the normal size (1.0): for a greater font size specify values > 1.0; for smaller font size specify values < 1.0.}
 \item{dpi                  }{Dots per inch; by default, dpi=72. This parameter affects to the width and height of the chart.}
-\item{latex_digits         }{Decimal digits for tables exported to latex with the 'xtable' package.}
+\item{latex_digits         }{Decimal digits for tables exported to latex (requires the 'xtable' R package).}
 \item{verbose              }{Value 0/1 to indicate if debug messages are printed on the screen.}
 \item{data_filename        }{Path and name for the input data file. Path may be absolute or relative to the current directory.}
 \item{graph_filename       }{Path and name for the graphs to be generated (without suffix). Path may be absolute or relative to the current directory.}
@@ -85,38 +88,41 @@ The following is an \strong{example of input file} called \file{mygraph.arg}.
 # -------------------------------------------------------
 # File: mygraph.arg
 # -------------------------------------------------------
-title=mytitle
-subtitle=mysubtitle
-x_axis_title=Total offered traffic per AC (Mbit/s)
-y_axis_title=Achieved throughput ratio
-#col_x_values=1         # deprecated (ignored)
-#col_y_values=2,4,6,8   # deprecated (ignored)
-series_names=Serie 1,Serie 2,Serie 3,Serie 4,Total
-x_factor=1
-y_factor=1
-total_serie=1
-total_value=0
+title=QoE - PSNR (AI mode; all tiles; varying BGT)
+subtitle=Varying Background Traffic
+x_axis_title=Background packets per second
+y_axis_title=PSNR (dB)
+col_x_values=1
+col_y_values=2,4,6,8
+series_names=Serie 1, Serie 2, Serie 3, Serie 4, Maximum, Acceptable
+x_factor=1.0
+y_factor=1.0
+total_serie=3, 3
+total_value=36.14, 27.0
 x_min=automatic
 x_max=automatic
-y_min=automatic
-y_max=automatic
+y_min=14.5
+y_max=36.5
 y_log=0
+smooth_data=0
 show_titles=0
 show_grid=1
-show_confint=1
+show_confint=0
 confint_as_percentage=0
-text_size_title=1
-text_size_subtitle=1
-text_size_axis_ticks=0.8
-text_size_axis_titles=0.8
-text_size_legend=1
-pos_legend=1
-graph_type=0
-width_factor=1
-height_factor=1
+text_size_title=1.0
+text_size_subtitle=1.2
+text_size_axis_ticks=1.6
+text_size_axis_titles=1.8
+text_size_legend=1.6
+pos_legend=7
+graph_type=2
+lines_width=2
+hotspots_size=3
+width_factor=1.0
+height_factor=1.0
 dpi=72
 latex_digits=3
-verbose=0
+verbose=1
 data_filename=mydata.txt
 graph_filename=mygraph
 graph_fileext_seq=png,eps
@@ -126,11 +132,20 @@ In the previous file, a data file called \file{mydata.txt} is specified with the
 
 % The % characters must be preceded by \
 % From 1.0-6 the data file should not use header.
+
+%\preformatted{
+%% x  Stat1      95\%CI   Stat2      95\%CI   Stat3      95\%CI  Stat4      95\%CI
+%1  2.7021E+06 121023  1.9424E+06 76146   1.1396E+06 72200  1.1434E+06 60750
+%2  1.9207E+06 189865  1.5882E+06 80444   1.0464E+06 60387  0.9824E+06 80031
+%3  2.3384E+06 120934  1.8543E+06 116278  1.1471E+06 76487  1.3576E+06 84200
+%}
+
+% Example from 1.0.8 (April, 2022)
 \preformatted{
-% x  Stat1      95\%CI   Stat2      95\%CI   Stat3      95\%CI  Stat4      95\%CI
-1  2.7021E+06 121023  1.9424E+06 76146   1.1396E+06 72200  1.1434E+06 60750
-2  1.9207E+06 189865  1.5882E+06 80444   1.0464E+06 60387  0.9824E+06 80031
-3  2.3384E+06 120934  1.8543E+06 116278  1.1471E+06 76487  1.3576E+06 84200
+0	36.141	36.142	36.139	36.139
+25	29.271	30.083	31.751	31.839
+50	22.076	23.907	26.977	27.684
+75	15.383	19.44	22.346	23.899
 }
 
 As we can see, column #1 is the X-axis values, as set with the \code{col_x_values} parameter. On the other hand, four series are going to be shown, corresponding to the columns specified by \code{col_y_values} parameter: 2,4,6,8. The rest of columns (3,5,7,9) are the confidence intervals computed for each serie, respectively.
@@ -141,10 +156,17 @@ The same can be achieved from the system console with the command:
 
 \code{Rscript -e "library('xtable');source('rplotengine.R');rplotengine('mygraph.arg')"}.
 
+
+The following graph \file{mygraph.png} is the result of the previous command with the parameter file \file{mygraph.arg} and data file \file{mydata.txt} shown:
+
+% https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Figures
 % Las imagenes se guardan en el subdrectorio man/figures y se referencian
 % con \figure relativas a ese directorio
 %\if{latex}{\figure{mygraph.png}{options: width="60\%" alt="File: mygraph.png"}}
-%\if{latex}{\figure{mygraph.eps}{options: width=7cm alt="File: mygraph.eps"}}
+%\if{latex}{\figure{mygraph.eps}{options: width=8cm}
+
+\if{html}{\figure{mygraph.png}{options: width=100 alt="File: mygraph.png"}}
+\if{latex}{\figure{mygraph.png}{options: width=8cm}}
 
 %\Sexpr[stage=render,results=rd,echo=FALSE]{
 %library(xtable)
