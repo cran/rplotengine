@@ -109,7 +109,7 @@ if (!file.exists(args_file)) {
             writeLines (paste("Graph parameters file '", args_file, "' not found.", sep=""))
          }
          # End
-         return (FALSE)
+         quit(status=1)  # return (FALSE)
       } else {
           # When checking the example of the package the output directory should not be in the
           # package directory "xxx.Rcheck", it should be the tempdir directory.
@@ -149,7 +149,7 @@ for (l in 1:args_rows) {
       # Error
       writeLines ( paste("Syntax error in input file, line: ", l, sep="") )
       writeLines ( args_lines[l] )
-      return (FALSE)
+      quit(status=1)  # return (FALSE)
    }
    # Get the index for this parameter
    if (arg_name == R_VARS[var]) {
@@ -171,7 +171,7 @@ for (l in 1:args_rows) {
       # Error: the argument is unknown
       writeLines ( paste("Unknown argument in input file, line: ", l, sep="") )
       writeLines ( args_lines[l] )
-      return (FALSE)
+      quit(status=1)  # return (FALSE)
    }
    val_name = R_VARS[i]
    line = paste (val_name, "='", arg_value, "'", sep="")  
@@ -208,7 +208,7 @@ if (!file.exists(data_filename)) {
       if (verbose == "1") {
          writeLines (paste("Data file '", data_filename, "' not found.", sep="")) # stop
       }
-      return (FALSE)
+      quit(status=1)  # return (FALSE)
     }
   }
 } else {
@@ -234,7 +234,7 @@ if (verbose == "1") {
 
 if ((data_cols==0) | (data_rows==0)) {
     # End: file empty
-    return (FALSE)
+    quit(status=1)  # return (FALSE)
 }
 
 # -------------------------------------------------------------------------
@@ -399,7 +399,7 @@ for (x_idx in 1:col_x_values_len) {
        if (col>NCOL(data)) {
            # Error: out of range
           writeLines (paste("   Column ", col, " for serie #", serie, " is out of range [0..", NCOL(data), "]", sep=""));
-          return (FALSE)
+          quit(status=1)  # return (FALSE)
        }
        x[x_idx,serie] = x_value		# Needed only for computing CI
        y[x_idx,serie] = y_value
@@ -480,7 +480,7 @@ export_data_to_latex (title, outputpath, graph_filename, series_names_lst,
 #    5-Stacked bars (experimental)
 #
 #  Each graph will be generated with several formats specified in the
-#  'graph_fileext_seq' parameter (e.g., "graph_fileext_seq=png,eps")
+#  'graph_fileext_seq' parameter (e.g., graph_fileext_seq="png,eps")
 # -------------------------------------------------------------------------
 
 if (verbose == "1") {
@@ -514,7 +514,7 @@ if (verbose == "1") {
 }
 flush.console()
 
-#return (TRUE)
+quit(status=0)  # return (TRUE)
 
 }
 
@@ -559,18 +559,15 @@ if (y_log == "0") {
 }
 
 # Smooth data: require(graphics)
-# http://analisisydecision.es/ajuste-de-splines-con-r/
-# https://code.i-harness.com/es/q/351b44
-# https://stackoverflow.com/questions/2121484/how-can-i-smooth-an-array-in-r
 if (smooth_data > 0.0) {
-    #   #pesos <- vector()
-    #   #dim(pesos) <- c(1,col_x_values_len)
-    #   #pesos <- c(0.01,0.01,0.01,1,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,...)
-    #   pesos <- matrix(0.01, 1, col_x_values_len)
+    #   #heft <- vector()
+    #   #dim(heft) <- c(1,col_x_values_len)
+    #   #heft <- c(0.01,0.01,0.01,1,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,...)
+    #   heft <- matrix(0.01, 1, col_x_values_len)
 
     #smooth = array(0, c(col_x_values_len,col_y_values_len))
     for (serie in 1:col_y_values_len) {
-        smooth <- smooth.spline(x[,1], y[,serie], spar=smooth_data)  # w=0.45  # w=pesos
+        smooth <- smooth.spline(x[,1], y[,serie], spar=smooth_data)  # w=0.45  # w=heft
         for (x_idx in 1:col_x_values_len) {
             y[x_idx,serie] = smooth$y[x_idx];
         }
@@ -690,7 +687,7 @@ for (ext_idx in 1:graph_fileext_len) {
       
       # Debug: show CI values
       #writeLines ("   Confidence Interval")
-      #writeLines (paste("   Expresado en %? = ", confint_as_percentage, sep=""))
+      #writeLines (paste("   Shown in %? = ", confint_as_percentage, sep=""))
       #writeLines (paste("   [", confint_top, " .. ", confint_bottom, "]", sep=""))
 
       # Draw CI
@@ -699,7 +696,7 @@ for (ext_idx in 1:graph_fileext_len) {
           segments (x[,serie], confint_top[,serie],
                     x[,serie], confint_bottom[,serie],
                     lwd=1.5, cex=0.5, col="grey65", lty=1);
-          # Compute final dimensions Oof the graph: vector with x-min, x-max, y-min, y-max
+          # Compute final dimensions of the graph: vector with x-min, x-max, y-min, y-max
           plotDim = par("usr")
           plot_x_min = plotDim[1];
           plot_x_max = plotDim[2];
@@ -721,14 +718,13 @@ for (ext_idx in 1:graph_fileext_len) {
    # Line types and colors to use; the default colors in R are defined in colors()
    #linetypes  = c("blank", "solid", "dashed", "dotted", "dotdash", "longdash", "twodash")
    colores = c("blue", "darkgreen", "darkviolet", "darkorange1", "chocolate4",
-                   "cornsilk4", "darkolivegreen", "darkgoldenrod1",
-                   "darkred", "deepskyblue4", "greenyellow",
-                   "indianred4", "khaki4",
-                   "midnightblue", "navyblue", "aquamarine4", "dodgerblue4")
-   coloresTotal = c("red", "gold4", "dodgerblue4", "aquamarine4", "navyblue", "midnightblue", "khaki4",
-                    "indianred4", "greenyellow", "deepskyblue4", "darkred", "darkgoldenrod1",
-                    "darkolivegreen", "cornsilk4", "chocolate4", "darkorange1", "darkviolet",
-                    "darkgreen")
+               "cornsilk4", "darkolivegreen", "darkgoldenrod1",
+               "darkred", "deepskyblue4", "greenyellow", "indianred4", "khaki4",
+               "midnightblue", "navyblue", "aquamarine4", "dodgerblue4")
+   coloresTotal = c("red", "gold4", "dodgerblue4", "aquamarine4", "navyblue", "midnightblue",
+               "khaki4", "indianred4", "greenyellow", "deepskyblue4", "darkred",
+               "darkgoldenrod1", "darkolivegreen", "cornsilk4", "chocolate4",
+               "darkorange1", "darkviolet", "darkgreen")
 
    # Type of graph:
    #    0-lines (l), 1-points (p), 2-lines & points splitted (b),
@@ -810,7 +806,8 @@ for (ext_idx in 1:graph_fileext_len) {
       # - fill = background color (NULL none, by default)
       # - xjust = alignment (0:left, by default, 0.5:centered, 1:right)
       # - title = title of legend (NULL none, by default)
-      # - inset = inset distance(s) from the margins as a fraction of the plot region when legend is placed by keyword
+      # - inset = inset distance(s) from the margins as a fraction of the
+      #           plot region when legend is placed by keyword
       legend (x=xLegend, legend=series_names_lst, cex=text_size_legend,
               lty=lty, lwd=lwd, pch=pch, col=col,
               box.lty=0, xjust=0, inset=c(0.01,0.01)) # y=yLegend,
@@ -818,6 +815,12 @@ for (ext_idx in 1:graph_fileext_len) {
    # Close the graph
    #graphics.off()  # Error in grDevices::dev.off(): cannot shut down device 1 (the null device)
    dev.off()
+   
+  # if ((ext == "ps") || (ext == "eps")) {
+  #    # R does not embed the font(s) used in the PostScript output (requires Ghostscript)
+  #    graph_filenameext_fonts = paste (outputpath, .Platform$file.sep, graph_filename, "_withfonts.", ext, sep="")
+  #    embed_fonts(graph_filenameext_fonts, output=graph_filenameext_fonts)
+  # }
 } # Extension
 
 }
@@ -1030,14 +1033,14 @@ rtrim<-function (str) {
 
 
 # =========================================================================
-# importar_datos: leer un fichero de datos y resumirlos para graficas
+# import_data: load a data file and summarize them for the graphs
 # =========================================================================
 
-importar_datos = function (data_path, data_filename, data_fileext, verbose) {
-   # Construimos el nombre del fichero de entrada (datos) y salida (grafico)
+import_data = function (data_path, data_filename, data_fileext, verbose) {
+   # Build the input filename (data) and output (graph)
    filename  = paste (data_filename, ".", data_fileext, sep="")
    filename = file.path (data_path, filename, fsep = .Platform$file.sep)
-   # Leemos los datos, considerando que la primera linea es de cabecera
+   # Load the data, considering the first line as header
    if (verbose == "1") {
       writeLines (paste("Loading data file '", filename, "' ...", sep=""))
    }
@@ -1054,10 +1057,10 @@ export_data = function (data_path, data_filename, data_fileext, x, y, verbose) {
    # Data frame combining x and y vectors
    data = data.frame(y)  # cbind(x, y)
    data.row.names = x
-   # Filename
+   # Build the output filename
    filename  = paste (data_filename, ".", data_fileext, sep="")
    filename = file.path (data_path, filename, fsep = .Platform$file.sep)
-   # Escribimos los datos
+   # Write the data
    if (verbose == "1") {
       writeLines (paste("Writting data file '", filename, "' ...", sep=""))
    }
@@ -1078,15 +1081,18 @@ export_data_to_latex = function (title, outputpath, filename, row_names, col_nam
       writeLines (paste("   File: ", filename_tex, sep=""))
    }
 
-   # Tabla latex (reservamos una fila y una columna para cabeceras)
-   # Por seguridad, ponemos un caracter de escape delante de los subrayados
-   # Al intentar cargar este fichero con source R da un error:
-   #Error: '\_' is an unrecognized escape in character string starting "\_"
+   # Latex table (the first row and column are headers): row_names and col_names, respctively.
+
+   # To avoid problems, an escape character '\' is added before underscores '_'.
    #new_names = sapply (strsplit(row_names,"_"), paste, collapse="\_")
-   # Poniendo dos "\\_" aparece en la tabla $\backslash$\_
-   # Con versiones recientes de xtable no es necesario; si se sustituye cada subrayado
-   # por "\\_" aparece en la tabla una barra adicional (lo sustituye por $\backslash$\_)
+   # But with "\_", an error is launched when loading this file in R:
+   #    Error: '\_' is an unrecognized escape in character string starting "\_"
+   #
+   # With two escape characters "\\_", this is replaced with "$\backslash$\_"
+   #    in the latex table.
    #new_names = sapply (strsplit(row_names,"_"), paste, collapse="\\_")
+   #
+   # With recent versions of "xtable" this is unnecessary.
    new_names = row_names
 
    table_names = list (new_names, col_names)
@@ -1096,11 +1102,13 @@ export_data_to_latex = function (title, outputpath, filename, row_names, col_nam
          table_data[row,col] = data[col,row]
       }
    }
-   table_digits  = array (latex_digits, c(col_x_values_len+1))   # decimales en todas las columnas (1 valor=se repite)
+   # Decimal places in each column (1 value -> repeated)
+   table_digits  = array (latex_digits, c(col_x_values_len+1))
+   # Caption of the table: title
    table_caption = paste (title, " data", sep="")
    # In the title, insert a '\' before the '%' (if it is there)
    #table_caption = sapply (strsplit(table_caption,"%"), paste, collapse="\\%")
-   table_caption = gsub("%", "\\%", table_caption, fixed=TRUE)  # fixed=TRUE para no utilizar expr. regular
+   table_caption = gsub("%", "\\%", table_caption, fixed=TRUE)  # fixed=TRUE to avoid using an regular expression
    #table_label  = paste (simulset, ":data:", title, sep="")
    table_label   = paste ("data:", basename(filename_tex), sep="")
    tabla_latex   = xtable (table_data, digits=table_digits, caption=table_caption, label=table_label)
@@ -1128,8 +1136,16 @@ export_data_to_latex = function (title, outputpath, filename, row_names, col_nam
 open_graph = function (filename, fileext, width_factor=1.0, height_factor=1.0, dpi=72) {
    if ((fileext == "ps") || (fileext == "eps")) {
       # File .ps o .eps
+      # R does not embed the font(s) used in the PostScript output;
+      # is is required Ghostscript at the end, or export to pdf with
+      # cairo_pdf() (see below)
       # For true EPS: onefile=FALSE and paper="special"
       try (postscript (filename, onefile=FALSE, horizontal=FALSE, pointsize=12,
+                       width=6*width_factor, height=6*height_factor), silent=FALSE)
+   } else if (fileext == "pdf") {
+      # New in v1.0-9
+      # pdf() does not embed fonts; cairo_pdf() embeds fonts.
+      try (cairo_pdf (filename, onefile=TRUE, pointsize=12,
            width=6*width_factor, height=6*height_factor), silent=FALSE)
    } else {
       w = 480 * width_factor

@@ -78,7 +78,7 @@ The meaning of each parameter is explained below:
 \item{verbose              }{Value 0/1 to indicate if debug messages are printed on the screen.}
 \item{data_filename        }{Path and name for the input data file. Path may be absolute or relative to the current directory.}
 \item{graph_filename       }{Path and name for the graphs to be generated (without suffix). Path may be absolute or relative to the current directory.}
-\item{graph_fileext_seq    }{List of suffixes for each output format to generate. For example: png,eps. The final graph file names generated will be the specified with \code{graph_filename} joined to each of these suffixes.}
+\item{graph_fileext_seq    }{List of suffixes for each output format to generate. For example: png,eps,pdf. The latter suffix 'pdf' will generate a PDF file with embedded fonts; the other formats not embed the fonts used. The final graph file names generated will be the specified with \code{graph_filename} joined to each of these suffixes.}
 }
 
 The following is an \strong{example of input file} called \file{mygraph.arg}.
@@ -125,7 +125,7 @@ latex_digits=3
 verbose=1
 data_filename=mydata.txt
 graph_filename=mygraph
-graph_fileext_seq=png,eps
+graph_fileext_seq=png,eps,pdf
 }
 
 In the previous file, a data file called \file{mydata.txt} is specified with the \code{data_filename} parameter. The following is an \strong{example of input data file} (slighly modified for clarity), which includes columns for the 95\% confidence intervals for each statistic:
@@ -150,7 +150,7 @@ In the previous file, a data file called \file{mydata.txt} is specified with the
 
 As we can see, column #1 is the X-axis values, as set with the \code{col_x_values} parameter. On the other hand, four series are going to be shown, corresponding to the columns specified by \code{col_y_values} parameter: 2,4,6,8. The rest of columns (3,5,7,9) are the confidence intervals computed for each serie, respectively.
 
-As a result of executing the command \code{rplotengine("mygraph.arg")} within the R console, two graphs files will be generated: \file{mygraph.png} and \file{mygraph.eps}. In addition, a LaTeX file \file{mygraph.tex} will be written with the same values as in the input data file but formatted as a table ready for be imported from a LaTeX document. \strong{NOTE:} the package 'xtable' should be installed and loaded before: \code{install.packages('xtable');library('xtable')}.
+As a result of executing the command \code{rplotengine("mygraph.arg")} within the R console, the following graphs files will be generated: \file{mygraph.png}, \file{mygraph.eps} and \file{mygraph.pdf}. In addition, a LaTeX file \file{mygraph.tex} will be written with the same values as in the input data file but formatted as a table ready for be imported from a LaTeX document. \strong{NOTE:} the package 'xtable' should be installed and loaded before: \code{install.packages('xtable');library('xtable')}.
 
 The same can be achieved from the system console with the command:
 
